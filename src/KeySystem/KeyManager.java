@@ -24,7 +24,13 @@ public class KeyManager {
         return false;
     }
 
-    public void initKeyStore() {
+    public boolean initKeyStore() {
+
+        return false;
+    }
+
+    public void createKeyStore()
+    {
 
     }
 
@@ -33,6 +39,8 @@ public class KeyManager {
     }
 
     public void setPassword(String password) {
+
+
 
     }
 

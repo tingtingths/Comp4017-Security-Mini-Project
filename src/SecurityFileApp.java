@@ -20,11 +20,15 @@ public class SecurityFileApp {
     }
 
     private void initSystem() {
-        System.out.println("/**** Your are new to the system, init the system first ****/");
-        if (!keyManager.isSystemInit()) {
-            System.out.println("Please input your new password:");
-            userInput = scanner.nextLine();
-            keyManager.setPassword(userInput);
+        if (keyManager.initKeyStore()) {
+            //TODO load the keyStore to memory
+        }else {
+            System.out.println("/**** Your are new to the system, init the system first ****/");
+            if (!keyManager.isSystemInit()) {
+                System.out.println("Please input your new password:");
+                userInput = scanner.nextLine();
+                keyManager.setPassword(userInput);
+            }
         }
     }
 
