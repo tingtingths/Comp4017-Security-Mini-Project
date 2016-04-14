@@ -1,8 +1,14 @@
 package KeySystem;
 
+import FileSystem.FileUtils;
 import com.sun.istack.internal.Nullable;
 import com.sun.org.apache.bcel.internal.generic.PUSH;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.LinkedList;
@@ -12,8 +18,7 @@ import java.util.LinkedList;
  */
 public class KeyManager {
 
-    public LinkedList<SecurityKey> privateKeyRing = new LinkedList<>();
-    public LinkedList<SecurityKey> publicKeyRing = new LinkedList<>();
+    KeyStore keyStore;
 
 
     public KeyManager() {
@@ -25,13 +30,29 @@ public class KeyManager {
     }
 
     public boolean initKeyStore() {
+        try {
+            FileInputStream fileIn = new FileInputStream(KeyStore.KEY_STORE_PATH);
+            ObjectInputStream objectIn = new ObjectInputStream(fileIn);
 
-        return false;
+            Object readInKeyStore = objectIn.readObject();
+            if (readInKeyStore instanceof KeyStore) {
+                this.keyStore = (KeyStore) readInKeyStore;
+                return true;
+            } else
+                return false;
+        } catch (FileNotFoundException e) {
+            return false;
+        } catch (IOException e) {
+            return false;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+
     }
 
-    public void createKeyStore()
-    {
-
+    public void createKeyStore(String keyDesc) {
+        keyStore = new KeyStore();
+        keyStore.createKeyStore(keyDesc);
     }
 
     public boolean checkPassord(String passord) {
@@ -39,8 +60,6 @@ public class KeyManager {
     }
 
     public void setPassword(String password) {
-
-
 
     }
 
@@ -65,6 +84,7 @@ public class KeyManager {
     public SecurityKey generatePrivateKeyPair(@Nullable SecurityKey PrivateKey) {
         if (PrivateKey == null) {
             //TODO create a new pair of key
+
         } else {
             if (PrivateKey.isPublicKey()) return null;
             PrivateKey privateKey = PrivateKey.getPrivateKey();
@@ -100,18 +120,6 @@ public class KeyManager {
 
     public void removePrivateKey() {
 
-    }
-
-    public boolean addPublicKeyToRing(SecurityKey PublicKey) {
-        if (!PublicKey.isPublicKey()) return false;
-
-        return true;
-    }
-
-    public boolean addPrivateKeyToRing(SecurityKey Private) {
-        if (Private.isPublicKey()) return false;
-
-        return true;
     }
 
 

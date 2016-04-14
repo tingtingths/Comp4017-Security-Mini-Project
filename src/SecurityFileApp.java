@@ -25,6 +25,9 @@ public class SecurityFileApp {
         }else {
             System.out.println("/**** Your are new to the system, init the system first ****/");
             if (!keyManager.isSystemInit()) {
+                System.out.println("Generating the first key... Please input the key description");
+                String firstDesc = scanner.nextLine();
+                keyManager.createKeyStore(firstDesc);
                 System.out.println("Please input your new password:");
                 userInput = scanner.nextLine();
                 keyManager.setPassword(userInput);
