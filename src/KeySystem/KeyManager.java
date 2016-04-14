@@ -4,13 +4,12 @@ import FileSystem.FileUtils;
 import com.sun.istack.internal.Nullable;
 import com.sun.org.apache.bcel.internal.generic.PUSH;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import javax.crypto.SecretKey;
+import java.io.*;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
@@ -58,9 +57,29 @@ public class KeyManager {
     }
 
     public void buildKeyStore() throws ExecutionException {
-        if (keyStore != null) {
-            // setup pbe
+        try {
+            if (keyStore != null) {
+                // key obj to byte
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(bos);
+                oos.writeObject(keyStore);
+                byte[] keyB = bos.toByteArray();
+                oos.close();
+                bos.close();
 
+                // pbe
+                SecureRandom rand = SecureRandom.getInstanceStrong();
+                byte[] salt = new byte[8];
+                rand.nextBytes(salt);
+                SecretKey pbeKey = KeyUtils.generatePBESymKey(passpharse.toCharArray(), salt);
+                CBCWrapper wrapper = KeyUtils.encryptPBE(pbeKey, keyB);
+
+                // store this two into the file
+                byte[] iv = wrapper.getIv();
+                byte[] encKey = wrapper.getData();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

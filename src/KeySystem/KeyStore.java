@@ -15,7 +15,7 @@ public class KeyStore implements Serializable {
     public void createKeyStore(String keyDesc) {
         privateKeyRing = new LinkedList<>();
         publicKeyRing = new LinkedList<>();
-        KeyPair keyPair = KeyUtils.generateRSAKeyPair();
+        KeyPair keyPair = KeyUtils.generateRSAKeyPair(2048);
         addPrivateKeyToRing(new SecurityKey(keyPair.getPublic(),keyPair.getPrivate(),keyDesc));
     }
 
