@@ -12,6 +12,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by xupengfei on 6/4/2016.
@@ -19,6 +20,7 @@ import java.util.LinkedList;
 public class KeyManager {
 
     KeyStore keyStore;
+    private String passpharse = "";
 
 
     public KeyManager() {
@@ -55,12 +57,19 @@ public class KeyManager {
         keyStore.createKeyStore(keyDesc);
     }
 
+    public void buildKeyStore() throws ExecutionException {
+        if (keyStore != null) {
+            // setup pbe
+
+        }
+    }
+
     public boolean checkPassord(String passord) {
         return true;
     }
 
     public void setPassword(String password) {
-
+        passpharse = password;
     }
 
     public String[] getPublicKeyDescriptions() {

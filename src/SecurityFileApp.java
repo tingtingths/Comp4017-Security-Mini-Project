@@ -31,6 +31,7 @@ public class SecurityFileApp {
                 System.out.println("Please input your new password:");
                 userInput = scanner.nextLine();
                 keyManager.setPassword(userInput);
+                keyManager.buildKeyStore();
             }
         }
     }

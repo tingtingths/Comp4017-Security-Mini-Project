@@ -1,5 +1,7 @@
 package KeySystem;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -13,16 +15,25 @@ class KeyUtils {
 
     }
 
-    static KeyPair generateRSAKeyPair()
+    static KeyPair generateRSAKeyPair(int size)
     {
-        KeyPairGenerator keyPairGenerator = null;
         try {
-            keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+            kpg.initialize(size);
+            return kpg.genKeyPair();
         } catch (NoSuchAlgorithmException e) {
             System.out.println("No way of doing this T.T");
         }
-        keyPairGenerator.initialize(2048);
-        KeyPair keyPair = keyPairGenerator.genKeyPair();
-        return keyPair;
+        return null;
+    }
+
+    static SecretKey generateSymKey(String algo, int size) {
+        String strAlgo = "";
+        if (algo == SymKeyAlgo.AES) strAlgo = "AES";
+        if (algo == SymKeyAlgo.DES) strAlgo = "DES";
+        if (algo == SymKeyAlgo.DESede) strAlgo = "DESede";
+        KeyGenerator kgen = KeyGenerator.getInstance(strAlgo);
+        kgen.init(size);
+        return kgen.generateKey();
     }
 }
