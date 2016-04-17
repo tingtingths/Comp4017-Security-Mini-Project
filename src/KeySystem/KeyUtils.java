@@ -58,7 +58,7 @@ public class KeyUtils {
         try {
             String pbeAlgo = "PBKDF2WithHmacSHA256";
             SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeAlgo);
-            KeySpec spec = new PBEKeySpec(passphrase, salt, 65536, 256);
+            KeySpec spec = new PBEKeySpec(passphrase, salt, 65536, 128);
             SecretKey tmp = factory.generateSecret(spec);
             return new SecretKeySpec(tmp.getEncoded(), "AES");
         } catch (Exception e) {

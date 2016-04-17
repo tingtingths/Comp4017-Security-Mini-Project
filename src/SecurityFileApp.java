@@ -1,7 +1,9 @@
 import FileSystem.FileManager;
 import KeySystem.KeyManager;
 
+import java.io.File;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by xupengfei on 6/4/2016.
@@ -22,7 +24,7 @@ public class SecurityFileApp {
     private void initSystem() {
         if (keyManager.initKeyStore()) {
             //TODO load the keyStore to memory
-        }else {
+        } else {
             System.out.println("/**** Your are new to the system, init the system first ****/");
             if (!keyManager.isSystemInit()) {
                 System.out.println("Generating the first key... Please input the key description");
@@ -31,7 +33,12 @@ public class SecurityFileApp {
                 System.out.println("Please input your new password:");
                 userInput = scanner.nextLine();
                 keyManager.setPassword(userInput);
-                keyManager.buildKeyStore();
+                try {
+                    File keyStoreFile = new File(System.getProperty("user.home"), "KeyStore.ser");
+                    keyManager.buildKeyStore(keyStoreFile);
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
