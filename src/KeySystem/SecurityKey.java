@@ -1,12 +1,13 @@
 package KeySystem;
 
+import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
 /**
  * Created by xupengfei on 6/4/2016.
  */
-public class SecurityKey {
+public class SecurityKey implements Serializable{
 
     private PublicKey publicKey;
 
@@ -19,7 +20,7 @@ public class SecurityKey {
         this.isPublicKey = false;
         this.publicKey = PublicKey;
         this.privateKey = PrivateKey;
-        this.keyDescription = keyDescription;
+        this.keyDescription = KeyDescription;
     }
 
     public SecurityKey(PublicKey PublicKey, String KeyDescription) {

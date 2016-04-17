@@ -56,7 +56,7 @@ public class KeyManager {
         keyStore.createKeyStore(keyDesc);
     }
 
-    public void buildKeyStore() throws ExecutionException {
+    public void buildKeyStore(File keyStoreFile) throws ExecutionException {
         try {
             if (keyStore != null) {
                 // key obj to byte
@@ -77,6 +77,14 @@ public class KeyManager {
                 // store this two into the file
                 byte[] iv = wrapper.getIv();
                 byte[] encKey = wrapper.getData();
+                int ivLength = iv.length;
+                System.out.println("File path: " + keyStoreFile.getAbsolutePath());
+                FileOutputStream fos = new FileOutputStream(keyStoreFile);
+                fos.write(ivLength);
+                fos.write(iv);
+                fos.write(ivLength);
+                fos.flush();
+                fos.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,6 +92,7 @@ public class KeyManager {
     }
 
     public boolean checkPassord(String passord) {
+
         return true;
     }
 
