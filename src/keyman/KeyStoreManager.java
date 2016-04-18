@@ -38,7 +38,7 @@ public class KeyStoreManager {
 		KeyPair kp = KeyPairUtil.gen(size);
 		KeyWrapper wrapper = new KeyWrapper(comment, passphrase, kp.getPrivate(), kp.getPublic());
 		try {
-			storeKey(wrapper);
+			storeKey(wrapper, KeyType.PRIVATE);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -73,15 +73,31 @@ public class KeyStoreManager {
 	public boolean importKey(byte[] b, String passphrase) {
 		try {
 			KeyWrapper wrapper = readKey(b, passphrase);
-			storeKey(wrapper);
+			storeKey(wrapper, KeyType.PRIVATE);
 			System.out.println("import key " + wrapper.getFingerprint() + " success");
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		return false;
 	}
+
+    public boolean importKey(File f) throws Exception {
+        return importKey(FileHelper.readBytes(f));
+    }
+
+    public boolean importKey(byte[] b) {
+        try {
+            KeyWrapper wrapper = readKey(b, passphrase);
+            storeKey(wrapper, KeyType.PUBLIC);
+            System.out.println("import key " + wrapper.getFingerprint() + " success");
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 
 	public boolean removeKey(KeyWrapper wrapper) {
 		try {
@@ -98,7 +114,7 @@ public class KeyStoreManager {
 		String content = new String(b);
 		//System.out.println(content);
 
-		Pattern p = Pattern.compile("(.*)\\n" + commentStr + "(.*)\\n" + keyTypeStr + "(.*)\\n" + fingerprintStr + "(.*)\\n(.*)\\n(.*)");
+		Pattern p = Pattern.compile("(.*)\\n" + commentStr + "(.*)\\n" + keyTypeStr + "(.*)\\n" + fingerprintStr + "(.*)\\n(.*?)\\n(.*)");
 		Matcher m = p.matcher(content);
 		if (m.matches()) {
 			if (m.groupCount() != 6) throw new KeyFileParseException("Error parsing key file.");
@@ -108,6 +124,8 @@ public class KeyStoreManager {
 			String fingerprint = m.group(4);
 			String encodedKey = m.group(5);
 			String footer = m.group(6);
+
+            //System.out.println(header);
 
 			// check parsed value
 			if (!header.equals(headerStr) || !footer.equals(footerStr))
@@ -119,7 +137,7 @@ public class KeyStoreManager {
 
 				return new KeyWrapper(comment, passphrase, key);
 			} else if (type.equalsIgnoreCase("PUBLIC")) {
-				PublicKey key = KeyPairUtil.decode(encodedKey.getBytes(), PublicKey.class.newInstance());
+				PublicKey key = (PublicKey) KeyPairUtil.decode(encodedKey.getBytes(), KeyPairUtil.Type.PUBLIC);
 				return new KeyWrapper(comment, passphrase, key);
 			} else {
 				throw new KeyFileParseException("Error parsing key file.");
@@ -130,9 +148,9 @@ public class KeyStoreManager {
 	}
 
 	// write key to keystore
-	private void storeKey(KeyWrapper wrapper) throws Exception {
+	public void storeKey(KeyWrapper wrapper, KeyType t) throws Exception {
 		File tmpF = File.createTempFile("tempkey", "ksm");
-		writeKey(tmpF, wrapper, KeyType.PRIVATE);
+		writeKey(tmpF, wrapper, t);
 		FileHelper.putZipEntry(keystoreFile, tmpF, wrapper.getFingerprint());
 		tmpF.delete();
 	}

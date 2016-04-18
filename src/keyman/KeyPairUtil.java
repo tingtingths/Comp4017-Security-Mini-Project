@@ -16,6 +16,10 @@ import java.util.Base64;
  */
 public class KeyPairUtil {
 
+	public enum Type {
+		PUBLIC, PRIVATE, PRIVKEYINFO
+	}
+
 	// Generate KeyPair, in RSA algorithm
 	public static KeyPair gen(int size) {
 		try {
@@ -27,6 +31,24 @@ public class KeyPairUtil {
 		} catch (Exception e) {
 			return null;
 		}
+	}
+
+	public static String encode(Key key, Type t) throws Exception {
+		String begining = "";
+		String ending = "";
+		byte[] b = new byte[0];
+
+		if (t == Type.PRIVATE) {
+			b = ((PrivateKey) key).getEncoded();
+		} else if (t == Type.PUBLIC) {
+			b = ((PublicKey) key).getEncoded();
+		} else if (t == Type.PRIVKEYINFO) {
+			b = ((EncryptedPrivateKeyInfo) key).getEncoded();
+		} else {
+			throw new UnknownKeyTypeException("Parameter not recognized");
+		}
+
+		return begining + Base64.getEncoder().encodeToString(b) + ending;
 	}
 
 	// Encode the key to Base64 String
@@ -127,6 +149,23 @@ public class KeyPairUtil {
 			X509EncodedKeySpec x509 = new X509EncodedKeySpec(Base64.getDecoder().decode(encodedKey));
 			PublicKey pubKey = kf.generatePublic(x509);
 			return (T) pubKey;
+		}
+
+		throw new UnknownKeyTypeException("Unsupported input key.");
+	}
+
+	public static Key decode(byte[] encodedKey, Type t) throws Exception {
+		KeyFactory kf = KeyFactory.getInstance("RSA");
+		if (t == Type.PRIVATE) {
+			// get private
+			PKCS8EncodedKeySpec pkcs = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(encodedKey));
+			PrivateKey privKey = kf.generatePrivate(pkcs);
+			return privKey;
+		}
+		if (t == Type.PUBLIC) {
+			X509EncodedKeySpec x509 = new X509EncodedKeySpec(Base64.getDecoder().decode(encodedKey));
+			PublicKey pubKey = kf.generatePublic(x509);
+			return pubKey;
 		}
 
 		throw new UnknownKeyTypeException("Unsupported input key.");

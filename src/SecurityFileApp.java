@@ -1,160 +1,85 @@
-import FileSystem.FileManager;
-import KeySystem.KeyManager;
+import helper.SymmetricDecrypter;
+import helper.SymmetricEncrypter;
+import keyman.KeyStoreManager;
+import keyman.KeyWrapper;
+import keyman.SymKeyUtil;
 
+import javax.crypto.SecretKey;
 import java.io.File;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
 
 /**
- * Created by xupengfei on 6/4/2016.
+ * Created by ting on 16年4月18日.
  */
 public class SecurityFileApp {
-    boolean running = true;
-    Scanner scanner = new Scanner(System.in);
-    String userInput = "";
-    FileManager fileManager;
-    KeyManager keyManager;
 
+    private Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        try {
+            SecurityFileApp app = new SecurityFileApp();
+            KeyStoreManager ksm = app.prepare();
+            app.run(ksm);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public SecurityFileApp() {
-        fileManager = new FileManager();
-        keyManager = new KeyManager();
+
     }
 
-    private void initSystem() {
-        if (keyManager.initKeyStore()) {
-            //TODO load the keyStore to memory
+    public KeyStoreManager prepare() {
+        try {
+            System.out.println("Path for keystore file (will create one if keystore not exist): ");
+            String path = scanner.nextLine();
+            File keystoreF = new File(path);
+
+            System.out.println("Please input the passphrase for this keystore: ");
+            String passphrase = scanner.nextLine();
+            return new KeyStoreManager(keystoreF, passphrase);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void printKeyPairs(KeyStoreManager ksm) {
+        for (int i = 0; i < ksm.getKeys().length; i++) {
+            System.out.println((i + 1) + "> " + ksm.getKeys()[i].getComment());
+        }
+    }
+
+    public void run(KeyStoreManager ksm) throws Exception {
+        boolean running = true;
+        String userInput;
+        SymmetricEncrypter symEnc;
+        SymmetricDecrypter symDec;
+        KeyWrapper keyPair = null;
+
+        if (ksm.getKeys().length == 0) {
+            System.out.println("The Keystore does not contain any RSA key pair...");
+            System.out.println("Generating one...");
+            System.out.println("Key comment: ");
+            String comment = scanner.nextLine();
+            System.out.println("Key size (1024, 2048, 4096 ...etc.)");
+            int size = Integer.valueOf(scanner.nextLine());
+            keyPair = ksm.createKey(comment, size);
+        } if (ksm.getKeys().length == 1) {
+          keyPair = ksm.getKeys()[0];
         } else {
-            System.out.println("/**** Your are new to the system, init the system first ****/");
-            if (!keyManager.isSystemInit()) {
-                System.out.println("Generating the first key... Please input the key description");
-                String firstDesc = scanner.nextLine();
-                keyManager.createKeyStore(firstDesc);
-                System.out.println("Please input your new password:");
-                userInput = scanner.nextLine();
-                keyManager.setPassword(userInput);
-                try {
-                    File keyStoreFile = new File(System.getProperty("user.home"), "KeyStore.ser");
-                    keyManager.buildKeyStore(keyStoreFile);
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }
+            printKeyPairs(ksm);
+            System.out.println("key number:");
+            int keyNum = Integer.valueOf(scanner.nextLine());
+            keyPair = ksm.getKeys()[keyNum-1];
         }
-    }
 
-    private boolean checkPassword() {
-        System.out.println("Please input your password: ");
-        userInput = scanner.nextLine();
-        return keyManager.checkPassord(userInput);
-    }
-
-    private void encryptFile() {
-        System.out.println("Please input the file path:");
-        userInput = scanner.nextLine();
-        fileManager.encryptFile(userInput);
-    }
-
-    private void decryptFile() {
-        System.out.println("Please input the file path:");
-        userInput = scanner.nextLine();
-        fileManager.decryptFile(userInput);
-    }
-
-    private void generateAsymmetricKeyPair() {
-        System.out.println("Generating keys...");
-        keyManager.generatePrivateKeyPair(null);
-        System.out.println("Done with generating keys!");
-    }
-
-    private void exportKey(boolean isPublic) {
-        System.out.println("Please type in the file path where you want to put the file");
-        userInput = scanner.nextLine();
-        if (isPublic) {
-            System.out.println("Exporting public key...");
-            keyManager.exportPrivateKey(userInput);
-        } else {
-            keyManager.exportPrivateKey(userInput);
-            System.out.println("Exporting private key...");
-        }
-        System.out.println("Exporting key to: " + userInput);
-    }
-
-    private void importKey(boolean isPublic) {
-        System.out.println("Please type in the file path of your key file: ");
-        userInput = scanner.nextLine();
-        if (isPublic) {
-            System.out.println("Importing public key...");
-            keyManager.importPublicKey(userInput);
-        } else {
-            System.out.println("Importing private key...");
-            keyManager.importPrivateKey(userInput);
-        }
-        System.out.println("Importing done!");
-    }
-
-    private void changeKeyDescription() {
-        System.out.println("What kind of key you'd like to access? ");
-        System.out.println("1. Public key ring");
-        System.out.println("2. Private key ring");
-        userInput = scanner.nextLine();
-        if (userInput.equals("1")) {
-            String selectIndex = "";
-            int keySize = 0;
-            do {
-                System.out.println("Choose the public key you'd like to change: ");
-                String[] keyDescription = keyManager.getPublicKeyDescriptions();
-                keySize = keyDescription.length;
-                printKeyDescriptions(keyDescription);
-                selectIndex = scanner.nextLine();
-            } while (Integer.parseInt(selectIndex) > keySize);
-
-
-            System.out.println("Please type in your new description: ");
-            String description = scanner.nextLine();
-            keyManager.updatePublicKeyDescription(Integer.parseInt(selectIndex), description);
-        } else if (userInput.equals("2")) {
-            String selectIndex = "";
-            int keySize = 0;
-            do {
-                System.out.println("Choose the private key you'd like to change: ");
-                String[] keyDescription = keyManager.getPrivateKeyDescriptions();
-                keySize = keyDescription.length;
-                printKeyDescriptions(keyDescription);
-                selectIndex = scanner.nextLine();
-            } while (Integer.parseInt(selectIndex) > keySize);
-
-            System.out.println("Please type in your new description: ");
-            String description = scanner.nextLine();
-            keyManager.updatePrivateKeyDescription(Integer.parseInt(selectIndex), description);
-        } else {
-            System.out.println("Invalid input...");
-            return;
-        }
-        System.out.println("Key description changed! ");
-    }
-
-    private void printKeyDescriptions(String[] keyDescriptions) {
-        int i = 0;
-        for (String keyDescription : keyDescriptions) {
-            System.out.println(Integer.toString(i) + ". " + keyDescription);
-            i++;
-        }
-    }
-
-    private void changePassword() {
-        System.out.println("Please type in your old password: ");
-        if (keyManager.checkPassord(scanner.nextLine())) {
-            System.out.println("Please type in your new password: ");
-            keyManager.changePassword(scanner.nextLine());
-        } else {
-            System.out.println("Wrong password!");
-        }
-    }
-
-    private void mainProcess() {
         while (running) {
-            System.out.println("\n\nChoose what you want to do: ");
+            System.out.println("Active key pair - " + keyPair.getComment());
+            System.out.println("Choose what you want to do: ");
             System.out.println("1: Encrypt File");
             System.out.println("2: Decrypt File");
             System.out.println("3: Generate Asymmetric Key pair");
@@ -163,58 +88,139 @@ public class SecurityFileApp {
             System.out.println("6: Import Public Key");
             System.out.println("7: Import Private Key");
             System.out.println("8: Change Key description");
-            System.out.println("9: Change password");
+            //System.out.println("9: Change password");
+            System.out.println("9: Set active Key pair:");
             System.out.println("0: quit");
             userInput = scanner.nextLine();
+
+            String inPath;
+            String outPath;
+            PrivateKey tmpPriv = null;
+            PublicKey tmpPub = null;
+            KeyWrapper tmpKey;
 
             switch (userInput) {
                 case "0":
                     running = false;
                     break;
                 case "1":
-                    encryptFile();
+                    System.out.println("File to be encrypted: ");
+                    inPath = scanner.nextLine();
+                    System.out.println("File to be outputed: ");
+                    outPath = scanner.nextLine();
+
+                    SecretKey symKey = null;
+                    boolean valid = false;
+                    while (!valid) {
+                        valid = true;
+                        System.out.println("Algorithm, 1>AES, 2>DES, 3>3DES");
+                        int algo = Integer.valueOf(scanner.nextLine());
+                        if (algo == 1) symKey = SymKeyUtil.gen(SymKeyUtil.SymKeyAlgo.AES, 128);
+                        else if (algo == 2) symKey = SymKeyUtil.gen(SymKeyUtil.SymKeyAlgo.DES, 112);
+                        else if (algo == 3) symKey = SymKeyUtil.gen(SymKeyUtil.SymKeyAlgo.DESede, 112);
+                        else valid = false;
+                    }
+
+                    symEnc = new SymmetricEncrypter(keyPair.getPublicKey(), symKey);
+                    symEnc.encrypt(new File(inPath), new File(outPath));
                     break;
                 case "2":
-                    decryptFile();
+                    System.out.println("File to be decrypted: ");
+                    inPath = scanner.nextLine();
+                    System.out.println("File to be outputed: ");
+                    outPath = scanner.nextLine();
+
+                    if (keyPair.getPrivateKey() != null) {
+                        symDec = new SymmetricDecrypter(keyPair.getPrivateKey());
+                        symDec.decrypt(new File(inPath), new File(outPath));
+                    } else {
+                        System.out.println("No private key found in active keypair...");
+                    }
                     break;
                 case "3":
-                    generateAsymmetricKeyPair();
+                    System.out.println("Key comment: ");
+                    String comment = scanner.nextLine();
+                    System.out.println("Key size (1024, 2048, 4096 ...etc.)");
+                    int size = Integer.valueOf(scanner.nextLine());
+                    ksm.createKey(comment, size);
                     break;
                 case "4":
-                    exportKey(true);
+                    System.out.println("Export path:");
+                    outPath = scanner.nextLine();
+                    ksm.writeKey(new File(outPath), keyPair, KeyStoreManager.KeyType.PUBLIC);
                     break;
                 case "5":
-                    exportKey(false);
+                    try {
+                        keyPair.getPrivateKey();
+                        System.out.println("Export path:");
+                        outPath = scanner.nextLine();
+                        ksm.writeKey(new File(outPath), keyPair, KeyStoreManager.KeyType.PRIVATE);
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
                     break;
                 case "6":
-                    importKey(true);
+                    System.out.println("Import path:");
+                    inPath = scanner.nextLine();
+                    ksm.importKey(new File(inPath));
                     break;
                 case "7":
-                    importKey(false);
+                    System.out.println("Import path:");
+                    inPath = scanner.nextLine();
+                    System.out.println("Passphrase:");
+                    String passphrase = scanner.nextLine();
+                    ksm.importKey(new File(inPath), passphrase);
                     break;
                 case "8":
-                    changeKeyDescription();
+                    System.out.println("Current comment: " + keyPair.getComment());
+                    System.out.println("New comment: ");
+                    String newComment = scanner.nextLine();
+
+                    tmpPriv = null;
+                    tmpPub = null;
+                    try {
+                        tmpPriv = keyPair.getPrivateKey();
+                        tmpPub = keyPair.getPublicKey();
+                    } catch (Exception e) {}
+                    tmpKey = new KeyWrapper(newComment, keyPair.getPassphrase(), tmpPriv, tmpPub);
+                    ksm.removeKey(keyPair);
+                    ksm.storeKey(tmpKey, KeyStoreManager.KeyType.PRIVATE);
+                    keyPair = tmpKey;
                     break;
+                /*
                 case "9":
-                    changePassword();
+                    System.out.println("Old passphrase:");
+                    if (scanner.nextLine().equals(keyPair.getPassphrase())) {
+                        System.out.println("New passphrase: ");
+                        String newPass = scanner.nextLine();
+
+                        for (KeyWrapper k : ksm.getKeys()) {
+                            tmpPriv = null;
+                            tmpPub = null;
+                            try {
+                                tmpPriv = k.getPrivateKey();
+                                tmpPub = k.getPublicKey();
+                            } catch (Exception e) {
+                            }
+                            tmpKey = new KeyWrapper(k.getComment(), newPass, tmpPriv, tmpPub);
+                            ksm.removeKey(k);
+                            ksm.storeKey(tmpKey, KeyStoreManager.KeyType.PRIVATE);
+                        }
+                    } else {
+                        System.out.println("Passphrase mismatch");
+                    }
+                    break;
+                */
+                case "9":
+                    printKeyPairs(ksm);
+                    System.out.println("key number:");
+                    int keyNum = Integer.valueOf(scanner.nextLine());
+                    keyPair = ksm.getKeys()[keyNum-1];
                     break;
                 default:
                     System.out.println("Invalid command!");
                     break;
             }
         }
-    }
-
-    public static void main(String[] args) {
-        SecurityFileApp app = new SecurityFileApp();
-
-        System.out.println("/---------Welcome---------/");
-        app.initSystem();
-        if (!app.checkPassword()) {
-            System.out.println("Wrong password!");
-        } else {
-            app.mainProcess();
-        }
-        System.out.println("Bye Bye!");
     }
 }

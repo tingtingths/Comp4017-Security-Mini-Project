@@ -17,21 +17,21 @@ public class KeyWrapper {
 	private PrivateKey privateKey = null;
 	private PublicKey publicKey = null;
 
-	KeyWrapper(String comment, String passphrase, PrivateKey privateKey, PublicKey publicKey) {
+	public KeyWrapper(String comment, String passphrase, PrivateKey privateKey, PublicKey publicKey) {
 		this.comment = comment;
 		this.passphrase = passphrase;
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
 	}
 
-	KeyWrapper(String comment, String passphrase, PrivateKey privateKey) throws Exception {
+	public KeyWrapper(String comment, String passphrase, PrivateKey privateKey) throws Exception {
 		this.comment = comment;
 		this.passphrase = passphrase;
 		this.privateKey = privateKey;
 		this.publicKey = KeyPairUtil.getKeyPair(privateKey).getPublic();
 	}
 
-	KeyWrapper(String comment, String passphrase, PublicKey publicKey) {
+	public KeyWrapper(String comment, String passphrase, PublicKey publicKey) {
 		this.comment = comment;
 		this.passphrase = passphrase;
 		this.publicKey = publicKey;
@@ -48,6 +48,8 @@ public class KeyWrapper {
 	public void setPassphrase(String passphrase) {
 		this.passphrase = passphrase;
 	}
+
+	public String getPassphrase() { return passphrase; }
 
 	public EncryptedPrivateKeyInfo getEncryptedPrivateKey() throws Exception {
 		return KeyPairUtil.encryptKey(privateKey, passphrase);
